@@ -1,0 +1,42 @@
+language: generic
+
+git:
+  depth: 1
+
+cache:
+  directories:
+    - $HOME/.stack/
+    - $TRAVIS_BUILD_DIR/.stack-work/
+
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: false
+      addons:
+        apt:
+          sources:
+            - hvr-ghc
+            - ubuntu-toolchain-r-test
+          packages:
+            - ghc-8.0.2
+
+    - os: osx
+      osx_image: xcode8.2
+
+before_install:
+  - mkdir -p ~/.local/bin
+  - export PATH=~/.local/bin:/opt/ghc/8.0.2/bin:$PATH
+  - |
+    if [ `uname` = "Darwin" ]
+    then
+      travis_retry curl -L https://www.stackage.org/stack/osx-x86_64 | tar xz --strip-components=1 --include '*/stack' -C ~/.local/bin
+    else
+      travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+    fi
+  - stack --no-terminal --system-ghc --install-ghc build --test --bench --only-dependencies
+
+install: true
+
+script:
+  - stack --no-terminal --system-ghc build --haddock --no-haddock-deps --test --bench --no-run-benchmarks
