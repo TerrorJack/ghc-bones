@@ -6,9 +6,9 @@ import Language.Haskell.GHC.Session
 import Test.Tasty
 import Test.Tasty.HUnit
 
-testLoad :: String -> IO Bool
-testLoad s =
-    runSessionT defSessionPref $ do
+testLoad :: SessionPref -> String -> IO Bool
+testLoad pref s =
+    runSessionT pref $ do
         dflags <- GHC.getSessionDynFlags
         void $ GHC.setSessionDynFlags dflags
         target <- GHC.guessTarget s Nothing
@@ -19,4 +19,8 @@ testLoad s =
 main :: IO ()
 main =
     defaultMain $
-    testCase "load Fact.hs" $ assert $ testLoad "test/case/Fact.hs"
+    testGroup
+        "load"
+        [ testCase "Fact.hs" $
+          assert $ testLoad defSessionPref "test/case/Fact.hs"
+        ]
