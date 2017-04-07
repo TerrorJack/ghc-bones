@@ -22,6 +22,7 @@ import Control.Monad.Writer.Class
 import qualified DynFlags as GHC
 import qualified Exception as GHC
 import qualified GHC
+import qualified GHC.Paths as GHC
 import qualified HscTypes as GHC
 import qualified Panic as GHC
 
@@ -80,6 +81,14 @@ data SessionPref = SessionPref
     { fatalMsg :: GHC.FatalMessager
     , flushOut :: GHC.FlushOut
     , libDir :: Maybe FilePath
+    }
+
+defSessionPref :: SessionPref
+defSessionPref =
+    SessionPref
+    { fatalMsg = GHC.defaultFatalMessager
+    , flushOut = GHC.defaultFlushOut
+    , libDir = Just GHC.libdir
     }
 
 runSessionT
