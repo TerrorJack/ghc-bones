@@ -1,21 +1,36 @@
 module Main where
 
+import Data.Functor
 import qualified GHC
 import Language.Haskell.GHC.Session
 import Test.Tasty
 import Test.Tasty.HUnit
 import Unsafe.Coerce
 
-testLoad :: SessionPref -> FilePath -> IO Bool
-testLoad pref src =
+testLoad :: SessionPref -> [FilePath] -> IO Bool
+testLoad pref srcs =
     runSessionT pref $ do
-        GHC.setTargets [GHC.Target (GHC.TargetFile src Nothing) True Nothing]
+        GHC.setTargets
+            [GHC.Target (GHC.TargetFile src Nothing) True Nothing | src <- srcs]
         sflag <- GHC.load GHC.LoadAllTargets
         pure $ GHC.succeeded sflag
 
-testEval :: SessionPref -> [String] -> String -> IO a
-testEval pref mods expr =
-    runSessionT pref $ do
+testEval :: SessionPref
+         -> [FilePath]
+         -> [FilePath]
+         -> [String]
+         -> String
+         -> IO a
+testEval pref imps srcs mods expr =
+    runSessionT
+        pref
+        { dynFlags =
+              \dflags ->
+                  dflags {GHC.importPaths = imps ++ GHC.importPaths dflags}
+        } $ do
+        GHC.setTargets
+            [GHC.Target (GHC.TargetFile src Nothing) True Nothing | src <- srcs]
+        void $ GHC.load GHC.LoadAllTargets
         GHC.setContext
             [GHC.IIDecl $ GHC.simpleImportDecl $ GHC.mkModuleName m | m <- mods]
         v <- GHC.compileExpr expr
@@ -26,7 +41,7 @@ loadTest =
     testGroup
         "load"
         [ testCase "Fact.hs" $
-          assert $ testLoad defSessionPref "test/case/Fact.hs"
+          assert $ testLoad defSessionPref ["./test/case/Fact.hs"]
         ]
 
 evalTest :: TestTree
@@ -35,7 +50,13 @@ evalTest =
         "eval"
         [ testCase "Int Literal" $
           assert $
-          (== (233 :: Int)) <$> testEval defSessionPref ["Prelude"] "233 :: Int"
+          (== (120 :: Int)) <$>
+          testEval
+              defSessionPref
+              ["./test/case"]
+              ["./test/case/Fact.hs"]
+              ["Fact"]
+              "fact 5"
         ]
 
 main :: IO ()
