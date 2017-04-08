@@ -13,11 +13,11 @@ testLoad pref src =
         sflag <- GHC.load GHC.LoadAllTargets
         pure $ GHC.succeeded sflag
 
-testEval :: SessionPref -> String -> IO a
-testEval pref expr =
+testEval :: SessionPref -> [String] -> String -> IO a
+testEval pref mods expr =
     runSessionT pref $ do
         GHC.setContext
-            [GHC.IIDecl $ GHC.simpleImportDecl $ GHC.mkModuleName "Prelude"]
+            [GHC.IIDecl $ GHC.simpleImportDecl $ GHC.mkModuleName m | m <- mods]
         v <- GHC.compileExpr expr
         pure $ unsafeCoerce v
 
@@ -34,7 +34,8 @@ evalTest =
     testGroup
         "eval"
         [ testCase "Int Literal" $
-          assert $ (== (233 :: Int)) <$> testEval defSessionPref "233 :: Int"
+          assert $
+          (== (233 :: Int)) <$> testEval defSessionPref ["Prelude"] "233 :: Int"
         ]
 
 main :: IO ()
