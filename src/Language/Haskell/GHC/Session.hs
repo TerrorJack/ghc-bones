@@ -81,7 +81,7 @@ data SessionPref = SessionPref
     { fatalMsg :: GHC.FatalMessager
     , flushOut :: GHC.FlushOut
     , libDir :: Maybe FilePath
-    , programDynFlags, interactiveDynFlags :: GHC.DynFlags -> GHC.DynFlags
+    , dynFlags :: GHC.DynFlags -> GHC.DynFlags
     }
 
 defSessionPref :: SessionPref
@@ -90,8 +90,7 @@ defSessionPref =
     { fatalMsg = GHC.defaultFatalMessager
     , flushOut = GHC.defaultFlushOut
     , libDir = Just GHC.libdir
-    , programDynFlags = id
-    , interactiveDynFlags = id
+    , dynFlags = id
     }
 
 runSessionT
@@ -104,8 +103,6 @@ runSessionT SessionPref {..} m =
         liftIO GHC.installSignalHandlers
         GHC.initGhcMonad libDir
         GHC.withCleanupSession $ do
-            pdf <- GHC.getProgramDynFlags
-            void $ GHC.setProgramDynFlags $ programDynFlags pdf
-            idf <- GHC.getInteractiveDynFlags
-            GHC.setInteractiveDynFlags $ interactiveDynFlags idf
+            dflags <- GHC.getSessionDynFlags
+            void $ GHC.setSessionDynFlags $ dynFlags dflags
             m
