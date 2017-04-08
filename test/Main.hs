@@ -6,26 +6,23 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import Unsafe.Coerce
 
-testLoad :: SessionPref -> String -> IO Bool
-testLoad pref s =
-    runSessionT pref $ do
-        target <- GHC.guessTarget s Nothing
-        GHC.setTargets [target]
-        sflag <- GHC.load GHC.LoadAllTargets
-        pure $ GHC.succeeded sflag
-
-testEval :: SessionPref -> String -> IO a
-testEval pref expr =
+testLoad :: SessionPref -> FilePath -> IO Bool
+testLoad pref src =
     runSessionT
         pref
         { dynFlags =
               dynFlags pref .
               (\dflags ->
                    dflags
-                   { GHC.hscTarget = GHC.HscInterpreted
-                   , GHC.ghcLink = GHC.LinkInMemory
-                   })
+                   {GHC.hscTarget = GHC.HscAsm, GHC.ghcLink = GHC.LinkInMemory})
         } $ do
+        GHC.setTargets [GHC.Target (GHC.TargetFile src Nothing) True Nothing]
+        sflag <- GHC.load GHC.LoadAllTargets
+        pure $ GHC.succeeded sflag
+
+testEval :: SessionPref -> String -> IO a
+testEval pref expr =
+    runSessionT pref $ do
         GHC.setContext
             [GHC.IIDecl $ GHC.simpleImportDecl $ GHC.mkModuleName "Prelude"]
         v <- GHC.compileExpr expr
