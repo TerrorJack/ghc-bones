@@ -1,6 +1,8 @@
 module Main where
 
+import Data.Functor
 import qualified GHC
+import qualified GHCi as GHC
 import Language.Haskell.GHC.Session
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -13,11 +15,14 @@ testLoad pref src =
         sflag <- GHC.load GHC.LoadAllTargets
         pure $ GHC.succeeded sflag
 
-testEval :: SessionPref -> String -> IO a
-testEval pref expr =
+testEval :: SessionPref -> String -> String -> IO a
+testEval pref stmt expr =
     runSessionT pref $ do
         GHC.setContext
             [GHC.IIDecl $ GHC.simpleImportDecl $ GHC.mkModuleName "Prelude"]
+        void $
+            GHC.execStmt stmt $
+            GHC.ExecOptions GHC.RunToCompletion "" 0 GHC.EvalThis
         v <- GHC.compileExpr expr
         pure $ unsafeCoerce v
 
@@ -34,7 +39,8 @@ evalTest =
     testGroup
         "eval"
         [ testCase "Int Literal" $
-          assert $ (== (233 :: Int)) <$> testEval defSessionPref "233 :: Int"
+          assert $
+          (== (233 :: Int)) <$> testEval defSessionPref "let x = 233 :: Int" "x"
         ]
 
 main :: IO ()
