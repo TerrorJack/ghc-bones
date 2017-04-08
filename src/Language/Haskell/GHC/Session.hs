@@ -2,7 +2,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE Strict #-}
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -81,6 +81,7 @@ data SessionPref = SessionPref
     { fatalMsg :: GHC.FatalMessager
     , flushOut :: GHC.FlushOut
     , libDir :: Maybe FilePath
+    , programDynFlags, interactiveDynFlags :: GHC.DynFlags -> GHC.DynFlags
     }
 
 defSessionPref :: SessionPref
@@ -89,6 +90,8 @@ defSessionPref =
     { fatalMsg = GHC.defaultFatalMessager
     , flushOut = GHC.defaultFlushOut
     , libDir = Just GHC.libdir
+    , programDynFlags = id
+    , interactiveDynFlags = id
     }
 
 runSessionT
@@ -100,4 +103,9 @@ runSessionT SessionPref {..} m =
     GHC.defaultErrorHandler fatalMsg flushOut $ do
         liftIO GHC.installSignalHandlers
         GHC.initGhcMonad libDir
-        GHC.withCleanupSession m
+        GHC.withCleanupSession $ do
+            pdf <- GHC.getProgramDynFlags
+            void $ GHC.setProgramDynFlags $ programDynFlags pdf
+            idf <- GHC.getInteractiveDynFlags
+            GHC.setInteractiveDynFlags $ interactiveDynFlags idf
+            m

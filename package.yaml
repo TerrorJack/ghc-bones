@@ -1,7 +1,7 @@
 name: ghc-bones
 version: 0.0.1
 category: Compiler, Development
-synopsis: A wrapper of GHC API to help reuse the frontend.
+synopsis: Yet another wrapper of GHC API.
 stability: alpha
 maintainer: Shao Cheng <astrohavoc@gmail.com>
 copyright: (c) 2017 Shao Cheng
