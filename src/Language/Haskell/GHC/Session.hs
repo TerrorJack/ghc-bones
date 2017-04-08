@@ -90,7 +90,10 @@ defSessionPref =
     { fatalMsg = GHC.defaultFatalMessager
     , flushOut = GHC.defaultFlushOut
     , libDir = Just GHC.libdir
-    , dynFlags = id
+    , dynFlags =
+          \dflags ->
+              dflags
+              {GHC.hscTarget = GHC.HscAsm, GHC.ghcLink = GHC.LinkInMemory}
     }
 
 runSessionT

@@ -8,14 +8,7 @@ import Unsafe.Coerce
 
 testLoad :: SessionPref -> FilePath -> IO Bool
 testLoad pref src =
-    runSessionT
-        pref
-        { dynFlags =
-              dynFlags pref .
-              (\dflags ->
-                   dflags
-                   {GHC.hscTarget = GHC.HscAsm, GHC.ghcLink = GHC.LinkInMemory})
-        } $ do
+    runSessionT pref $ do
         GHC.setTargets [GHC.Target (GHC.TargetFile src Nothing) True Nothing]
         sflag <- GHC.load GHC.LoadAllTargets
         pure $ GHC.succeeded sflag
