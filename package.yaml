@@ -18,11 +18,16 @@ ghc-options: -Wall
 
 dependencies:
   - base >= 4.9 && < 4.10
+  - async
+  - deepseq
+  - directory
+  - filepath
   - ghc
   - ghc-paths
   - monad-control
   - mtl
   - safe-exceptions
+  - temporary
   - transformers-base
 
 library:

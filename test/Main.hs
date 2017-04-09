@@ -1,7 +1,11 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Main where
 
+import Data.Either
 import Data.Functor
 import qualified GHC
+import Language.Haskell.GHC.Eval
 import Language.Haskell.GHC.Session
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -11,7 +15,9 @@ testLoad :: SessionPref -> [FilePath] -> IO Bool
 testLoad pref srcs =
     runSessionT pref $ do
         GHC.setTargets
-            [GHC.Target (GHC.TargetFile src Nothing) True Nothing | src <- srcs]
+            [ GHC.Target (GHC.TargetFile src' Nothing) True Nothing
+            | src' <- srcs
+            ]
         sflag <- GHC.load GHC.LoadAllTargets
         pure $ GHC.succeeded sflag
 
@@ -21,7 +27,7 @@ testEval :: SessionPref
          -> [String]
          -> String
          -> IO a
-testEval pref imps srcs mods expr =
+testEval pref imps srcs mods expr' =
     runSessionT
         pref
         { dynFlags =
@@ -29,11 +35,13 @@ testEval pref imps srcs mods expr =
                   dflags {GHC.importPaths = imps ++ GHC.importPaths dflags}
         } $ do
         GHC.setTargets
-            [GHC.Target (GHC.TargetFile src Nothing) True Nothing | src <- srcs]
+            [ GHC.Target (GHC.TargetFile src' Nothing) True Nothing
+            | src' <- srcs
+            ]
         void $ GHC.load GHC.LoadAllTargets
         GHC.setContext
             [GHC.IIDecl $ GHC.simpleImportDecl $ GHC.mkModuleName m | m <- mods]
-        v <- GHC.compileExpr expr
+        v <- GHC.compileExpr expr'
         pure $ unsafeCoerce v
 
 loadTest :: TestTree
@@ -59,5 +67,27 @@ evalTest =
               "fact 5"
         ]
 
+safeEvalTest :: TestTree
+safeEvalTest =
+    testGroup
+        "safe eval"
+        [ testCase "timeout" $
+          assert $
+          isLeft <$>
+          eval
+              defSessionPref
+              defEvalPref {timeLimit = 4000000}
+              (Eval "" "let x = x in x" :: Eval ())
+        , testCase "Int expr" $
+          assert $
+          (\case
+               Right 2 -> True
+               _ -> False) <$>
+          eval
+              defSessionPref
+              defEvalPref
+              (Eval "x :: Int\nx = 1 + 1\n" "x" :: Eval Int)
+        ]
+
 main :: IO ()
-main = defaultMain $ testGroup "SessionT" [loadTest, evalTest]
+main = defaultMain $ testGroup "SessionT" [loadTest, evalTest, safeEvalTest]
