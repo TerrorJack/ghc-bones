@@ -60,11 +60,12 @@ eval spref EvalPref {..} Eval {..} = withAsync eval_act with_eval_async
         runSessionT
             spref
             { dynFlags =
-                  \dflags ->
-                      dflags
-                      { GHC.importPaths =
-                            takeDirectory hs_path : GHC.importPaths dflags
-                      }
+                  dynFlags spref .
+                  (\dflags ->
+                       dflags
+                       { GHC.importPaths =
+                             takeDirectory hs_path : GHC.importPaths dflags
+                       })
             }
             (session_act hs_path)
     session_act
