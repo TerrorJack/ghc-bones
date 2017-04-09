@@ -11,7 +11,7 @@ import Data.Foldable
 import Data.Functor
 import Data.Int
 import qualified GHC
-import Language.Haskell.GHC.Session
+import Language.Haskell.GHC.SessionT
 import System.Directory
 import System.FilePath
 import System.IO

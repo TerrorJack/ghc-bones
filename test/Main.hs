@@ -6,7 +6,7 @@ import Data.Either
 import Data.Functor
 import qualified GHC
 import Language.Haskell.GHC.Eval
-import Language.Haskell.GHC.Session
+import Language.Haskell.GHC.SessionT
 import Test.Tasty
 import Test.Tasty.HUnit
 import Unsafe.Coerce

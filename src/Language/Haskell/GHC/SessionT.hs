@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Language.Haskell.GHC.Session where
+module Language.Haskell.GHC.SessionT where
 
 import Control.Applicative
 import Control.Exception.Safe
