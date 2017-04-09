@@ -49,7 +49,10 @@ loadTest =
     testGroup
         "load"
         [ testCase "Fact.hs" $
-          assert $ testLoad defSessionPref ["./test/case/Fact.hs"]
+          assert $
+          testLoad
+              defSessionPref
+              ["./test/case/Fact.hs", "./test/case/UnsafeFact.hs"]
         ]
 
 evalTest :: TestTree
@@ -76,7 +79,7 @@ safeEvalTest =
           isLeft <$>
           eval
               defSessionPref
-              defEvalPref {timeLimit = 4000000}
+              defEvalPref {timeLimit = 1000000}
               (Eval "" "let x = x in x" :: Eval ())
         , testCase "Int expr" $
           assert $

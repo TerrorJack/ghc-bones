@@ -80,7 +80,6 @@ instance (MonadIO m, MonadMask m) =>
 data SessionPref = SessionPref
     { fatalMsg :: GHC.FatalMessager
     , flushOut :: GHC.FlushOut
-    , libDir :: Maybe FilePath
     , dynFlags :: GHC.DynFlags -> GHC.DynFlags
     }
 
@@ -89,7 +88,6 @@ defSessionPref =
     SessionPref
     { fatalMsg = GHC.defaultFatalMessager
     , flushOut = GHC.defaultFlushOut
-    , libDir = Just GHC.libdir
     , dynFlags =
           \dflags ->
               dflags
@@ -104,7 +102,7 @@ runSessionT SessionPref {..} m =
     unSessionT $
     GHC.defaultErrorHandler fatalMsg flushOut $ do
         liftIO GHC.installSignalHandlers
-        GHC.initGhcMonad libDir
+        GHC.initGhcMonad $ Just GHC.libdir
         GHC.withCleanupSession $ do
             dflags <- GHC.getSessionDynFlags
             void $ GHC.setSessionDynFlags $ dynFlags dflags
