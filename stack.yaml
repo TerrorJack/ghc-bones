@@ -1,5 +1,4 @@
 resolver: nightly-2017-04-06
 build:
-  test: true
   test-arguments:
     additional-args: ["-j1"]
