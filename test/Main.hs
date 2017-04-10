@@ -5,10 +5,12 @@ module Main where
 import Data.Either
 import Data.Foldable
 import Data.Functor
+import Data.IORef
 import qualified DriverPipeline as GHC
 import qualified GHC
 import qualified Hooks as GHC
 import qualified HscTypes as GHC
+import Language.Haskell.GHC.Dump
 import Language.Haskell.GHC.Eval
 import Language.Haskell.GHC.SessionT
 import System.Directory
@@ -87,6 +89,19 @@ testEval pref imps srcs mods expr' =
         v <- GHC.compileExpr expr'
         pure $ unsafeCoerce v
 
+testDump :: SessionPref -> [FilePath] -> [FilePath] -> IO Int
+testDump pref imps srcs = do
+    counter <- newIORef 0
+    void $
+        dumpCore
+            pref
+            { dynFlags =
+                  \dflags ->
+                      dflags {GHC.importPaths = imps ++ GHC.importPaths dflags}
+            }
+            srcs $ \_ _ -> modifyIORef' counter succ
+    readIORef counter
+
 loadTest :: TestTree
 loadTest =
     testGroup
@@ -135,6 +150,12 @@ safeEvalTest =
               (Eval "x :: Int\nx = 1 + 1\n" "x" :: Eval Int)
         ]
 
+dumpTest :: TestTree
+dumpTest =
+    testCase "dump" $
+    assert $
+    (== 2) <$> testDump defSessionPref ["./test/case"] ["./test/case/Fact.hs"]
+
 cleanupTest :: TestTree
 cleanupTest =
     testCase "cleanup" $
@@ -149,4 +170,6 @@ cleanupTest =
 main :: IO ()
 main =
     defaultMain $
-    testGroup "SessionT" [loadTest, evalTest, safeEvalTest, cleanupTest]
+    testGroup
+        "SessionT"
+        [loadTest, evalTest, safeEvalTest, cleanupTest, dumpTest, cleanupTest]

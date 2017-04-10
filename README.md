@@ -10,9 +10,11 @@ Yet another GHC API wrapper.
 * An `eval` function which compiles a module and uses it as the context to evaluate an expression. It supports:
     * Limiting time/memory usage
     * Evaluating the expression to normal form
+* A `dumpCore` function which compiles some modules and dump the optimized Core. The dumper is not invoked if the cached interface/object files are up to date.
 * A test suite demostrating the use of `SessionT`:
-    * Compiling a module to object code
+    * Compiling two modules to object code
     * Loading a compiled module and evaluate an expression
+    * Compile modules and use a dummy counter as Core dumper
 
 ## Planned
 
