@@ -8,6 +8,7 @@ import Data.Functor
 import qualified DriverPipeline as GHC
 import qualified GHC
 import qualified Hooks as GHC
+import qualified HscTypes as GHC
 import Language.Haskell.GHC.Eval
 import Language.Haskell.GHC.SessionT
 import System.Directory
@@ -47,12 +48,20 @@ testLoad pref srcs =
                     (GHC.runPhase phase_plus input_fn dflags)
                     pipe_env
                     pipe_state
-            case phase_plus of
-                GHC.RealPhase phase -> putStr $ "RealPhase " ++ show phase
-                GHC.HscOut hsc_src _ _ -> putStr $ "HscOut " ++ show hsc_src
-            case phase_plus' of
-                GHC.RealPhase phase -> putStrLn $ ", RealPhase " ++ show phase
-                GHC.HscOut hsc_src _ _ -> putStrLn $ ", HscOut " ++ show hsc_src
+            putStr $ "input_fn " ++ input_fn
+            for_ [phase_plus, phase_plus'] $ \pp ->
+                case pp of
+                    GHC.RealPhase phase -> putStr $ ", RealPhase " ++ show phase
+                    GHC.HscOut hsc_src _ hsc_status -> do
+                        putStr $ ", HscOut " ++ show hsc_src
+                        case hsc_status of
+                            GHC.HscRecomp _ _ -> putStr " HscRecomp"
+                            GHC.HscNotGeneratingCode ->
+                                putStr " HscNotGeneratingCode"
+                            GHC.HscUpToDate -> putStr " HscUpToDate"
+                            GHC.HscUpdateBoot -> putStr " HscUpdateBoot"
+                            GHC.HscUpdateSig -> putStr " HscUpdateSig"
+            putChar '\n'
             pure r
 
 testEval :: SessionPref
